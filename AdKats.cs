@@ -514,6 +514,8 @@ namespace PRoConEvents
         private Boolean _InformReportedPlayers;
         private String[] _PlayerInformExclusionStrings = { };
         private Int32 _MinimumReportHandleSeconds;
+        private Int32 _MinimumReportReputation;
+        
 
         //Email
         private Boolean _UseEmail;
@@ -1637,6 +1639,7 @@ namespace PRoConEvents
                 {
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Required Reason Length", typeof(int), _RequiredReasonLength));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Report Handle Seconds", typeof(int), _MinimumReportHandleSeconds));
+                    buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Report Reputation", typeof(int), _MinimumReportReputation));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Minutes Into Round To Use Assist", typeof(int), _minimumAssistMinutes));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Maximum Temp-Ban Duration Minutes", typeof(Double), _MaxTempBanDuration.TotalMinutes));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Countdown Duration before a Nuke is fired", typeof(int), _NukeCountdownDurationSeconds));
@@ -7301,6 +7304,20 @@ namespace PRoConEvents
                         }
                         //Once setting has been changed, upload the change to database
                         QueueSettingForUpload(new CPluginVariable(@"Minimum Report Handle Seconds", typeof(Int32), _MinimumReportHandleSeconds));
+                    }
+                }
+                else if (Regex.Match(strVariable, @"Minimum Report Reputation").Success)
+                {
+                    Int32 minimumReportReputation = Int32.Parse(strValue);
+                    if (_MinimumReportReputation != minimumReportReputation)
+                    {
+                        _MinimumReportReputation = minimumReportReputation;
+                        if (_MinimumReportReputation < 0)
+                        {
+                            _MinimumReportReputation = 0;
+                        }
+                        //Once setting has been changed, upload the change to database
+                        QueueSettingForUpload(new CPluginVariable(@"Minimum Report Reputation", typeof(Int32), _MinimumReportReputation));
                     }
                 }
                 else if (Regex.Match(strVariable, @"Minimum Minutes Into Round To Use Assist").Success)
@@ -35493,6 +35510,15 @@ namespace PRoConEvents
                         return;
                     }
                 }
+                
+                if (record.source_player.player_reputation <= _MinimumReportReputation) {
+                    record.isContested = true;
+                
+                    SendMessageToSource(record, "You need at least " + _MinimumReportReputation + " reputation to report " + record.GetSourceName() + ". Use /rep to see your current reputation.");
+                    PlayerTellMessage(record.target_player.player_name, "You need at least " + _MinimumReportReputation + " reputation to report " + record.GetSourceName() + ". Use /rep to see your current reputation.");
+                    return;
+                }
+                
                 AttemptReportAutoAction(record, reportID.ToString());
                 String sourceAAIdentifier = (record.source_player != null && record.source_player.player_aa) ? ("(AA)") : ("");
                 String targetAAIdentifier = (record.target_player != null && record.target_player.player_aa) ? ("(AA)") : ("");
@@ -41622,6 +41648,7 @@ namespace PRoConEvents
                 QueueSettingForUpload(new CPluginVariable(@"Countdown Duration before a Nuke is fired", typeof(Int32), _NukeCountdownDurationSeconds));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Required Reason Length", typeof(Int32), _RequiredReasonLength));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Report Handle Seconds", typeof(Int32), _MinimumReportHandleSeconds));
+                QueueSettingForUpload(new CPluginVariable(@"Minimum Report Reputation", typeof(Int32), _MinimumReportReputation));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Minutes Into Round To Use Assist", typeof(Int32), _minimumAssistMinutes));
                 QueueSettingForUpload(new CPluginVariable(@"Allow Commands from Admin Say", typeof(Boolean), _AllowAdminSayCommands));
                 QueueSettingForUpload(new CPluginVariable(@"Reserved slot grants access to squad lead command", typeof(Boolean), _ReservedSquadLead));
