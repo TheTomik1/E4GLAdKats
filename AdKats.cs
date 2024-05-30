@@ -35512,10 +35512,7 @@ namespace PRoConEvents
                 }
                 
                 if (record.source_player.player_reputation <= _MinimumReportReputation) {
-                    record.isContested = true;
-                
-                    SendMessageToSource(record, "You need at least " + _MinimumReportReputation + " reputation to report " + record.GetSourceName() + ". Use /rep to see your current reputation.");
-                    PlayerTellMessage(record.target_player.player_name, "You need at least " + _MinimumReportReputation + " reputation to report " + record.GetSourceName() + ". Use /rep to see your current reputation.");
+                    PlayerTellMessage(record.source_player.player_name, "You need at least " + _MinimumReportReputation + " reputation to report " + record.target_player.player_name + ". Use /rep to see your current reputation.");
                     return;
                 }
                 
