@@ -19,13 +19,14 @@
  *
  * Development by Daniel J. Gradinjan (ColColonCleaner)
  * Work on fork by Hedius (Version >= 8.0.0.0)
+ * Work on fork by TheTomik (From Hedius fork) (Version >= 8.3.0.0)
  *
  * AdKats.cs
- * Version 8.2.0.0
- * 09-MAY-2023
+ * Version 8.3.0.1
+ * 19-AUG-2024
  *
  * Automatic Update Information
- * <version_code>8.2.0.0</version_code>
+ * <version_code>8.3.0.1</version_code>
  */
 
 using System;
@@ -68,7 +69,7 @@ namespace PRoConEvents
     {
 
         //Current Plugin Version
-        private const String PluginVersion = "8.2.0.0";
+        private const String PluginVersion = "8.3.0.1";
 
         public enum GameVersionEnum
         {
@@ -449,7 +450,7 @@ namespace PRoConEvents
         private Int32 _IROOverridesLowPopInfractions = 5;
         private Int32 _IROTimeout = 10;
         private Boolean _OnlyKillOnLowPop = true;
-        private String[] _PunishmentHierarchy = { "kill", "kick", "tban120", "kill", "kick", "tbanday", "kick", "tbanweek", "kick", "tban2weeks", "kick", "tbanmonth", "kick", "ban" };
+        private String[] _PunishmentHierarchy = { "kill", "kick", "tban120", "kill", "kick", "tbanday", "kick", "tbanweek", "kick", "tban2weeks", "kick", "tbanmonth", "tban2months", "tban6months", "kick", "ban" };
 
         //Teamswap
         private Int32 _TeamSwapTicketWindowHigh = 500000;
@@ -514,8 +515,6 @@ namespace PRoConEvents
         private Boolean _InformReportedPlayers;
         private String[] _PlayerInformExclusionStrings = { };
         private Int32 _MinimumReportHandleSeconds;
-        private Int32 _MinimumReportReputation;
-        
 
         //Email
         private Boolean _UseEmail;
@@ -1042,6 +1041,8 @@ namespace PRoConEvents
                 "tbanweek",
                 "tban2weeks",
                 "tbanmonth",
+                "tban2months",
+                "tban6months",
                 "ban"
             };
 
@@ -1131,7 +1132,7 @@ namespace PRoConEvents
 
         public String GetPluginAuthor()
         {
-            return "ColColonCleaner, Prophet731, Hedius, neonardo1";
+            return "ColColonCleaner, Prophet731, Hedius, neonardo1, TheTomik";
         }
 
         public String GetPluginWebsite()
@@ -1639,7 +1640,6 @@ namespace PRoConEvents
                 {
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Required Reason Length", typeof(int), _RequiredReasonLength));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Report Handle Seconds", typeof(int), _MinimumReportHandleSeconds));
-                    buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Report Reputation", typeof(int), _MinimumReportReputation));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Minimum Minutes Into Round To Use Assist", typeof(int), _minimumAssistMinutes));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Maximum Temp-Ban Duration Minutes", typeof(Double), _MaxTempBanDuration.TotalMinutes));
                     buildList.Add(new CPluginVariable(GetSettingSection("5") + t + "Countdown Duration before a Nuke is fired", typeof(int), _NukeCountdownDurationSeconds));
@@ -7304,20 +7304,6 @@ namespace PRoConEvents
                         }
                         //Once setting has been changed, upload the change to database
                         QueueSettingForUpload(new CPluginVariable(@"Minimum Report Handle Seconds", typeof(Int32), _MinimumReportHandleSeconds));
-                    }
-                }
-                else if (Regex.Match(strVariable, @"Minimum Report Reputation").Success)
-                {
-                    Int32 minimumReportReputation = Int32.Parse(strValue);
-                    if (_MinimumReportReputation != minimumReportReputation)
-                    {
-                        _MinimumReportReputation = minimumReportReputation;
-                        if (_MinimumReportReputation < 0)
-                        {
-                            _MinimumReportReputation = 0;
-                        }
-                        //Once setting has been changed, upload the change to database
-                        QueueSettingForUpload(new CPluginVariable(@"Minimum Report Reputation", typeof(Int32), _MinimumReportReputation));
                     }
                 }
                 else if (Regex.Match(strVariable, @"Minimum Minutes Into Round To Use Assist").Success)
@@ -32195,6 +32181,18 @@ namespace PRoConEvents
                         record.command_action = GetCommandByKey("player_ban_temp");
                         TempBanTarget(record);
                     }
+                    else if (action == "tban2months")
+                    {
+                        record.command_numeric = 86400;
+                        record.command_action = GetCommandByKey("player_ban_temp");
+                        TempBanTarget(record);
+                    }
+                    else if (action == "tban6months")
+                    {
+                        record.command_numeric = 259200;
+                        record.command_action = GetCommandByKey("player_ban_temp");
+                        TempBanTarget(record);
+                    }
                     else if (action == "ban")
                     {
                         record.command_action = GetCommandByKey("player_ban_perm");
@@ -35242,7 +35240,7 @@ namespace PRoConEvents
                         command.CommandText = @"
                         DELETE FROM
                             `adkats_specialplayers`
-                        WHERE `player_group` IN ('persistent_mute', 'persistent_mute_force')
+                        WHERE `player_group` = @player_group
                           AND (`player_id` = @player_id OR `player_identifier` = @player_name);
                         INSERT INTO
                             `adkats_specialplayers`
@@ -35510,12 +35508,6 @@ namespace PRoConEvents
                         return;
                     }
                 }
-                
-                if (record.source_player.player_reputation <= _MinimumReportReputation) {
-                    PlayerTellMessage(record.source_player.player_name, "You need at least " + _MinimumReportReputation + " reputation to report " + record.target_player.player_name + ". Use /rep to see your current reputation.");
-                    return;
-                }
-                
                 AttemptReportAutoAction(record, reportID.ToString());
                 String sourceAAIdentifier = (record.source_player != null && record.source_player.player_aa) ? ("(AA)") : ("");
                 String targetAAIdentifier = (record.target_player != null && record.target_player.player_aa) ? ("(AA)") : ("");
@@ -41645,7 +41637,6 @@ namespace PRoConEvents
                 QueueSettingForUpload(new CPluginVariable(@"Countdown Duration before a Nuke is fired", typeof(Int32), _NukeCountdownDurationSeconds));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Required Reason Length", typeof(Int32), _RequiredReasonLength));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Report Handle Seconds", typeof(Int32), _MinimumReportHandleSeconds));
-                QueueSettingForUpload(new CPluginVariable(@"Minimum Report Reputation", typeof(Int32), _MinimumReportReputation));
                 QueueSettingForUpload(new CPluginVariable(@"Minimum Minutes Into Round To Use Assist", typeof(Int32), _minimumAssistMinutes));
                 QueueSettingForUpload(new CPluginVariable(@"Allow Commands from Admin Say", typeof(Boolean), _AllowAdminSayCommands));
                 QueueSettingForUpload(new CPluginVariable(@"Reserved slot grants access to squad lead command", typeof(Boolean), _ReservedSquadLead));
@@ -44734,7 +44725,7 @@ namespace PRoConEvents
                         //Grab the matching players
                         while (reader.Read())
                         {
-                            APlayer aPlayer = FetchPlayer(false, true, false, null, reader.GetInt64("player_id"), null, null, null, null);
+                            APlayer aPlayer = FetchPlayer(false, false, false, null, reader.GetInt64("player_id"), null, null, null, null);
                             if (aPlayer != null)
                             {
                                 resultPlayers.Add(aPlayer);
@@ -45507,7 +45498,7 @@ namespace PRoConEvents
                             //Grab the matching players
                             while (reader.Read())
                             {
-                                APlayer aPlayer = FetchPlayer(false, true, false, null, reader.GetInt64("player_id"), null, null, null, null);
+                                APlayer aPlayer = FetchPlayer(false, false, false, null, reader.GetInt64("player_id"), null, null, null, null);
                                 if (aPlayer != null)
                                 {
                                     resultPlayers.Add(aPlayer);
@@ -49575,7 +49566,7 @@ namespace PRoConEvents
 
         private Boolean AssignPlayerRole(APlayer aPlayer)
         {
-            AUser matchingUser = _userCache.Values.FirstOrDefault(aUser => aUser.soldierDictionary.Values.Any(uPlayer => uPlayer.player_id == aPlayer.player_id || uPlayer.player_guid == aPlayer.player_guid));
+            AUser matchingUser = _userCache.Values.FirstOrDefault(aUser => aUser.soldierDictionary.Values.Any(uPlayer => uPlayer.player_id == aPlayer.player_id || (!String.IsNullOrEmpty(uPlayer.player_guid) && uPlayer.player_guid == aPlayer.player_guid)));
             ARole aRole = null;
             Boolean authorized = false;
             if (matchingUser != null)
