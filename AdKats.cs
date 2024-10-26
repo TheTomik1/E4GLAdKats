@@ -527,7 +527,7 @@ namespace PRoConEvents
         private Int32 _PersistentMutedPlayerChances = 5;
         private String _MutedPlayerKickMessage = "Talking excessively while muted.";
         private String _MutedPlayerKillMessage = "Do not talk while muted. You can speak again next round.";
-        private String _PersistentMutedPlayerKickMessage = "Talking excessively while muted.";  
+        private String _PersistentMutedPlayerKickMessage = "Talking excessively while muted.";
         private String _PersistentMutedPlayerKillMessage = "Do not talk while muted. This mute is permanent/temp.";
         private String _MutedPlayerMuteMessage = "You have been muted by an admin, talking will cause punishment. You can speak again next round.";
         private String _UnMutePlayerMessage = "You have been unmuted by an admin.";
@@ -714,7 +714,7 @@ namespace PRoConEvents
         //Watchlist
         private Boolean _UseDiscordForWatchlist = false;
         private Boolean _DiscordWatchlistLeftEnabled = false;
-           
+
         //Challenge
         private AChallengeManager ChallengeManager;
 
@@ -1888,8 +1888,8 @@ namespace PRoConEvents
                     //Muting Settings
                     buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "On-Player-Muted Message", typeof(String), _MutedPlayerMuteMessage));
                     buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "On-Player-Killed Message", typeof(String), _MutedPlayerKillMessage));
-                    buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "On-Player-Kicked Message", typeof(String), _MutedPlayerKickMessage)); 
-                    buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "Persistent On-Player-Killed Message", typeof(String), _PersistentMutedPlayerKillMessage)); 
+                    buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "On-Player-Kicked Message", typeof(String), _MutedPlayerKickMessage));
+                    buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "Persistent On-Player-Killed Message", typeof(String), _PersistentMutedPlayerKillMessage));
                     buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "Persistent On-Player-Kicked Message", typeof(String), _PersistentMutedPlayerKickMessage));
                     buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "On-Player-Unmuted Message", typeof(String), _UnMutePlayerMessage));
                     buildList.Add(new CPluginVariable(GetSettingSection("A11") + t + "# Chances to give player before kicking", typeof(int), _MutedPlayerChances));
@@ -2678,7 +2678,7 @@ namespace PRoConEvents
                 lstReturn.Add(new CPluginVariable(GetSettingSection(discordMonitorSection) + t + "Failed to build setting section.", typeof(String), ""));
             }
         }
-        
+
         public void BuildWatchlistSettings(List<CPluginVariable> lstReturn) {
             var section = "B30";
             List<CPluginVariable> buildList = new List<CPluginVariable>();
@@ -3010,7 +3010,7 @@ namespace PRoConEvents
                 lstReturn.Add(new CPluginVariable(GetSettingSection("D99") + t + "Failed to build setting section.", typeof(String), ""));
             }
         }
-        
+
         public void BuildProxySettings(List<CPluginVariable> lstReturn)
         {
             List<CPluginVariable> buildList = new List<CPluginVariable>();
@@ -5901,7 +5901,7 @@ namespace PRoConEvents
                         _DiscordManager.APIUrl = strValue;
                         QueueSettingForUpload(new CPluginVariable(@"Discord API URL", typeof(String), _DiscordManager.APIUrl));
                     }
-                } 
+                }
                 else if (Regex.Match(strVariable, @"Discord Server ID").Success)
                 {
                     if (_DiscordManager.ServerID != strValue)
@@ -9893,7 +9893,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            _pluginLinks = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/LINKS.md?cacherand=" + Environment.TickCount);
+                            _pluginLinks = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/main/LINKS.md?cacherand=" + Environment.TickCount);
                             Log.Debug(() => "Plugin links fetched from backup location.", 1);
                         }
                         catch (Exception)
@@ -9912,7 +9912,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            _pluginDescription = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/README.md?cacherand=" + Environment.TickCount);
+                            _pluginDescription = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/README.md?cacherand=" + Environment.TickCount);
                             Log.Debug(() => "Plugin readme fetched from backup location.", 1);
                         }
                         catch (Exception)
@@ -9931,7 +9931,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            _pluginChangelog = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/CHANGELOG.md?cacherand=" + Environment.TickCount);
+                            _pluginChangelog = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/CHANGELOG.md?cacherand=" + Environment.TickCount);
                             Log.Debug(() => "Plugin changelog fetched from backup location.", 1);
                         }
                         catch (Exception)
@@ -14216,8 +14216,8 @@ namespace PRoConEvents
                                         `team2_tpm`,
                                         `roundstat_time`,
                                         `map`
-                                    ) 
-                                    VALUES 
+                                    )
+                                    VALUES
                                     (
                                         @server_id,
                                         @round_id,
@@ -14249,7 +14249,7 @@ namespace PRoConEvents
                                     command.Parameters.AddWithValue("@team1_tpm", Math.Round(team1.GetTicketDifferenceRate(), 2));
                                     command.Parameters.AddWithValue("@team2_tpm", Math.Round(team2.GetTicketDifferenceRate(), 2));
                                     command.Parameters.AddWithValue("@map", _serverInfo.InfoObject.Map);
-                            
+
                                     try
                                     {
                                         //Attempt to execute the query
@@ -14268,11 +14268,11 @@ namespace PRoConEvents
                             watch.Stop();
                             // dynamic wait time, Log every 30s if the server has players else every 10 minutes.
                             int logDelay = 30;
-                            if (team1.TeamPlayerCount == 0 && team2.TeamPlayerCount == 0) 
+                            if (team1.TeamPlayerCount == 0 && team2.TeamPlayerCount == 0)
                             {
                              logDelay = 600;
                             }
-                            
+
                             if (watch.Elapsed.TotalSeconds < logDelay)
                             {
                                 Threading.Wait(TimeSpan.FromSeconds(logDelay) - watch.Elapsed);
@@ -17600,7 +17600,7 @@ namespace PRoConEvents
 
                                     // Wait 2 seconds
                                     Threading.Wait(2000);
-                                    
+
                                     // Send warning to player if the player is muted.
                                     if (_UseFirstSpawnMutedMessage && (GetMatchingVerboseASPlayersOfGroup("persistent_mute", aPlayer).Any() || GetMatchingVerboseASPlayersOfGroup("persistent_mute_force", aPlayer).Any()))
                                     {
@@ -17619,7 +17619,7 @@ namespace PRoConEvents
                                             Threading.Wait(TimeSpan.FromSeconds(_YellDuration));
                                         }
                                     }
-                                    
+
                                     // Battlecry
                                     if (_battlecryVolume != BattlecryVolume.Disabled &&
                                         !String.IsNullOrEmpty(aPlayer.player_battlecry))
@@ -21435,7 +21435,7 @@ namespace PRoConEvents
                                 return;
                             }
                             Log.Debug(() => record.command_type.command_key + " record allowed to continue processing.", 5);
-                            break; 
+                            break;
                         case "player_whitelistba_remove":
                             // again redudant... ahhh this needs a redesign. NOW. Hedius.
                             if (!GetMatchingASPlayersOfGroup("whitelist_ba", record.target_player).Any())
@@ -21445,7 +21445,7 @@ namespace PRoConEvents
                                 return;
                             }
                             Log.Debug(() => record.command_type.command_key + " record allowed to continue processing.", 5);
-                            break;                            
+                            break;
                         case "player_persistentmute_remove":
                             if (!GetMatchingASPlayersOfGroup("persistent_mute", record.target_player).Any() && !GetMatchingASPlayersOfGroup("persistent_mute_force", record.target_player).Any())
                             {
@@ -22002,7 +22002,7 @@ namespace PRoConEvents
                                     return;
                                 case 2:
                                     record.target_name = parameters[0];
-                              
+
                                     //attempt to handle via pre-message ID
                                     record.record_message = GetPreMessage(parameters[1], _RequirePreMessageUse);
                                     if (record.record_message == null)
@@ -22011,7 +22011,7 @@ namespace PRoConEvents
                                         FinalizeRecord(record);
                                         return;
                                     }
-                              
+
                                     //Handle based on report ID if possible
                                     if (!HandlePlayerReport(record))
                                     {
@@ -22025,7 +22025,7 @@ namespace PRoConEvents
                                             FinalizeRecord(record);
                                         }
                                     }
-                                    break; 
+                                    break;
                                 default:
                                     SendMessageToSource(record, "Invalid parameters, unable to submit.");
                                     FinalizeRecord(record);
@@ -22071,7 +22071,7 @@ namespace PRoConEvents
                                     return;
                                 case 2:
                                     record.target_name = parameters[0];
-                              
+
                                     //attempt to handle via pre-message ID
                                     record.record_message = GetPreMessage(parameters[1], _RequirePreMessageUse);
                                     if (record.record_message == null)
@@ -22080,7 +22080,7 @@ namespace PRoConEvents
                                         FinalizeRecord(record);
                                         return;
                                     }
-                              
+
                                     //Handle based on report ID if possible
                                     if (!HandlePlayerReport(record))
                                     {
@@ -22094,7 +22094,7 @@ namespace PRoConEvents
                                             FinalizeRecord(record);
                                         }
                                     }
-                                    break; 
+                                    break;
                                 default:
                                     SendMessageToSource(record, "Invalid parameters, unable to submit.");
                                     FinalizeRecord(record);
@@ -24720,13 +24720,13 @@ namespace PRoConEvents
                                     return;
                                 case 2:
                                     if (record.record_source != ARecord.Sources.InGame)
-                                    { 
+                                    {
                                         SendMessageToSource(record, "You can't use this command from outside the game.");
                                         FinalizeRecord(record);
                                         return;
                                     }
                                     record.target_name = parameters[0];
-                              
+
                                     //attempt to handle via pre-message ID
                                     record.record_message = GetPreMessage(parameters[1], _RequirePreMessageUse);
                                     if (record.record_message == null)
@@ -24735,7 +24735,7 @@ namespace PRoConEvents
                                         FinalizeRecord(record);
                                         return;
                                     }
-                              
+
                                     //Handle based on report ID if possible
                                     if (!HandlePlayerReport(record))
                                     {
@@ -24749,7 +24749,7 @@ namespace PRoConEvents
                                             FinalizeRecord(record);
                                         }
                                     }
-                                    break; 
+                                    break;
                                 default:
                                     SendMessageToSource(record, "Invalid parameters, unable to submit.");
                                     FinalizeRecord(record);
@@ -27168,7 +27168,7 @@ namespace PRoConEvents
                             // MY EYES ARE BLEEDING :) Hedius.
                             //Remove previous commands awaiting confirmation
                             CancelSourcePendingAction(record);
-                            
+
                             bool isBF4DB = record.command_type.command_key == "player_whitelistbf4db";
 
                             if ((isBF4DB && !_FeedBF4DBWhitelist) || (!isBF4DB && !_FeedBAWhitelist))
@@ -27302,12 +27302,12 @@ namespace PRoConEvents
                             // MY EYES ARE BLEEDING :) Hedius.
                             //Remove previous commands awaiting confirmation
                             CancelSourcePendingAction(record);
-                    
+
                             String defaultReason = "Perma/Temp Muting Player";
-                    
+
                             //Parse parameters using max param count
                             String[] parameters = Util.ParseParameters(remainingMessage, 3);
-                    
+
                             if (parameters.Length > 0)
                             {
                                 String stringDuration = parameters[0].ToLower();
@@ -27369,14 +27369,14 @@ namespace PRoConEvents
                                     defaultReason = FormatTimeString(TimeSpan.FromMinutes(record.command_numeric), 2) + " " + defaultReason;
                                 }
                             }
-                    
+
                             switch (parameters.Length)
                             {
                                 case 0:
                                     //No parameters
                                     SendMessageToSource(record, "No parameters given, unable to submit.");
                                     FinalizeRecord(record);
-                                    return; 
+                                    return;
                                 case 1:
                                     //time
                                     if (record.record_source != ARecord.Sources.InGame)
@@ -27401,7 +27401,7 @@ namespace PRoConEvents
                                     //reason
                                     record.target_name = parameters[1];
                                     Log.Debug(() => "target: " + record.target_name, 6);
-                                    
+
                                     record.record_message = GetPreMessage(parameters[2], _RequirePreMessageUse);
                                     if (record.record_message == null)
                                     {
@@ -27418,7 +27418,7 @@ namespace PRoConEvents
                                             SendMessageToSource(record, "Reason too short, unable to submit.");
                                             FinalizeRecord(record);
                                             return;
-                                        } 
+                                        }
                                     }
                                     Log.Debug(() => "" + record.record_message, 6);
                                     CompleteTargetInformation(record, false, true, true);
@@ -28208,7 +28208,7 @@ namespace PRoConEvents
                         {
                             //Remove previous commands awaiting confirmation
                             CancelSourcePendingAction(record);
-                            
+
                             // A dirty try to no copy the code again...
                             bool isBF4DB = record.command_type.command_key == "player_whitelistbf4db";
 
@@ -28503,14 +28503,14 @@ namespace PRoConEvents
                         {
                             //Remove previous commands awaiting confirmation
                             CancelSourcePendingAction(record);
-                    
+
                             // This is the only difference between 90 % of all whitelist handlers
                             // this is so awful. Well. Too lazy to refactor and debug this...
                             String defaultReason = "Move Protection Whitelist";
-                    
+
                             //Parse parameters using max param count
                             String[] parameters = Util.ParseParameters(remainingMessage, 3);
-                    
+
                             if (parameters.Length > 0)
                             {
                                 String stringDuration = parameters[0].ToLower();
@@ -28572,7 +28572,7 @@ namespace PRoConEvents
                                     defaultReason = FormatTimeString(TimeSpan.FromMinutes(record.command_numeric), 2) + " " + defaultReason;
                                 }
                             }
-                    
+
                             switch (parameters.Length)
                             {
                                 case 0:
@@ -28626,7 +28626,7 @@ namespace PRoConEvents
                         {
                             //Remove previous commands awaiting confirmation
                             CancelSourcePendingAction(record);
-                    
+
                             //Parse parameters using max param count
                             String[] parameters = Util.ParseParameters(remainingMessage, 1);
                             switch (parameters.Length)
@@ -29561,14 +29561,14 @@ namespace PRoConEvents
                          {
                              //Remove previous commands awaiting confirmation
                              CancelSourcePendingAction(record);
- 
+
                              if (_serverInfo.ServerType == "OFFICIAL")
                              {
                                  SendMessageToSource(record, record.command_type.command_name + " cannot be performed on official servers.");
                                  FinalizeRecord(record);
                                  return;
                              }
- 
+
                              //Parse parameters using max param count
                              String[] parameters = Util.ParseParameters(remainingMessage, 2);
                              switch (parameters.Length)
@@ -29595,7 +29595,7 @@ namespace PRoConEvents
                                      return;
                                  case 2:
                                      record.target_name = parameters[0];
- 
+
                                      //attempt to handle via pre-message ID
                                      record.record_message = GetPreMessage(parameters[1], _RequirePreMessageUse);
                                      if (record.record_message == null)
@@ -29604,7 +29604,7 @@ namespace PRoConEvents
                                          FinalizeRecord(record);
                                          return;
                                      }
- 
+
                                      //Handle based on report ID if possible
                                      if (!HandlePlayerReport(record))
                                      {
@@ -30970,7 +30970,7 @@ namespace PRoConEvents
                     case "player_persistentmute_force":
                         PersistentMuteTarget(record, true);
                         break;
-                    case "player_unmute": 
+                    case "player_unmute":
                     case "player_persistentmute_remove":
                         UnMuteTarget(record);
                         break;
@@ -31094,12 +31094,12 @@ namespace PRoConEvents
                     case "player_whitelistbalance":
                         BalanceWhitelistTarget(record);
                         break;
-                    case "player_whitelistbf4db": 
+                    case "player_whitelistbf4db":
                         BF4DBWhitelistTarget(record);
                         break;
-                    case "player_whitelistba": 
+                    case "player_whitelistba":
                         BAWhitelistTarget(record);
-                        break;                       
+                        break;
                     case "player_slotreserved":
                         ReservedSlotTarget(record);
                         break;
@@ -31189,13 +31189,13 @@ namespace PRoConEvents
                         break;
                     case "player_blacklistdisperse_remove":
                         BalanceDisperseRemoveTarget(record);
-                        break; 
-                    case "player_whitelistbf4db_remove": 
+                        break;
+                    case "player_whitelistbf4db_remove":
                         BF4DBWhitelistRemoveTarget(record);
                         break;
-                     case "player_whitelistba_remove": 
+                     case "player_whitelistba_remove":
                         BAWhitelistRemoveTarget(record);
-                        break;                       
+                        break;
                     case "player_whitelistpopulator":
                         PopulatorWhitelistTarget(record);
                         break;
@@ -32483,7 +32483,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting BalanceWhitelistTarget", 6);
         }
-        
+
         public void BF4DBWhitelistTarget(ARecord record)
         {
             Log.Debug(() => "Entering BF4DBWhitelistTarget", 6);
@@ -32555,7 +32555,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting BF4DBWhitelistTarget", 6);
         }
-        
+
         // Welcome to redundant code part 90k.
         public void BAWhitelistTarget(ARecord record)
         {
@@ -32627,7 +32627,7 @@ namespace PRoConEvents
                 FinalizeRecord(record);
             }
             Log.Debug(() => "Exiting BattlefieldAgencyWhitelistTarget", 6);
-        }   
+        }
 
         public void ReservedSlotTarget(ARecord record)
         {
@@ -34307,7 +34307,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting BalanceDisperseRemoveTarget", 6);
         }
-        
+
         public void BF4DBWhitelistRemoveTarget(ARecord record)
         {
             Log.Debug(() => "Entering BF4DBWhitelistRemoveTarget", 6);
@@ -34367,7 +34367,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting BF4DBWhitelistRemoveTarget", 6);
         }
-        
+
         // Redundant :P
         public void BAWhitelistRemoveTarget(ARecord record)
         {
@@ -34813,7 +34813,7 @@ namespace PRoConEvents
                         command.Parameters.AddWithValue("@player_id", record.target_player.player_id);
                         command.Parameters.AddWithValue("@player_name", record.target_player.player_name);
                         command.Parameters.AddWithValue("@duration_minutes", record.command_numeric);
- 
+
                         Int32 rowsAffected = SafeExecuteNonQuery(command);
                         if (rowsAffected > 0)
                         {
@@ -34941,7 +34941,7 @@ namespace PRoConEvents
                         command.Parameters.AddWithValue("@player_id", record.target_player.player_id);
                         command.Parameters.AddWithValue("@player_name", record.target_player.player_name);
                         command.Parameters.AddWithValue("@duration_minutes", record.command_numeric);
-        
+
                         Int32 rowsAffected = SafeExecuteNonQuery(command);
                         if (rowsAffected > 0)
                         {
@@ -34965,7 +34965,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting MoveProtectionWhitelistTarget", 6);
         }
-        
+
         public void MoveProtectionWhitelistRemoveTarget(ARecord record)
         {
             Log.Debug(() => "Entering MoveProtectionWhitelistRemoveTarget", 6);
@@ -35218,7 +35218,7 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting muteTarget", 6);
         }
-        
+
         public void PersistentMuteTarget(ARecord record, bool force)
         {
             Log.Debug(() => "Entering PersistentMuteTarget", 6);
@@ -35274,7 +35274,7 @@ namespace PRoConEvents
                         command.Parameters.AddWithValue("@player_id", record.target_player.player_id);
                         command.Parameters.AddWithValue("@player_name", record.target_player.player_name);
                         command.Parameters.AddWithValue("@duration_minutes", record.command_numeric);
-        
+
                         Int32 rowsAffected = SafeExecuteNonQuery(command);
                         if (rowsAffected > 0)
                         {
@@ -35304,11 +35304,11 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting PersistentMuteTarget", 6);
         }
-        
+
         public void UnMuteTarget(ARecord record)
         {
             Log.Debug(() => "Entering UnMuteTarget", 6);
-            try 
+            try
             {
                 //Case for multiple targets
                 if (record.target_player == null)
@@ -35321,7 +35321,7 @@ namespace PRoConEvents
                 var persistentMute = GetMatchingVerboseASPlayersOfGroup("persistent_mute", record.target_player).Any();
                 var persistentForceMute = GetMatchingVerboseASPlayersOfGroup("persistent_mute_force", record.target_player).Any();
                 if (persistentMute || persistentForceMute)
-                { 
+                {
                     List<ASpecialPlayer> matchingPlayers = GetMatchingASPlayersOfGroup("persistent_mute", record.target_player);
                     List<ASpecialPlayer> matchingPlayersForce = GetMatchingASPlayersOfGroup("persistent_mute_force", record.target_player);
                     if (!matchingPlayers.Any() && !matchingPlayersForce.Any())
@@ -35340,19 +35340,19 @@ namespace PRoConEvents
                                 command.CommandText = @"DELETE FROM `adkats_specialplayers` WHERE `specialplayer_id` = @sp_id";
                                 command.Parameters.AddWithValue("@sp_id", asPlayer.specialplayer_id);
                                 Int32 rowsAffected = SafeExecuteNonQuery(command);
-                                if (rowsAffected > 0) 
+                                if (rowsAffected > 0)
                                 {
                                     String message = "Player " + record.GetTargetNames() + " removed from persistent mutes.";
                                     Log.Debug(() => message, 3);
                                     updated = true;
                                 }
-                                else 
+                                else
                                 {
                                     Log.Error("Unable to remove player from persistent mutes. Error uploading.");
                                 }
                             }
                         }
-                        if (updated) 
+                        if (updated)
                         {
                             String message = "Player " + record.GetTargetNames() + " has been unmuted. (removed perma/temp mute)";
                             SendMessageToSource(record, message);
@@ -35362,7 +35362,7 @@ namespace PRoConEvents
                 }
                 if (_RoundMutedPlayers.ContainsKey(record.target_player.player_name))
                 {
-                    _RoundMutedPlayers.Remove(record.target_player.player_name); 
+                    _RoundMutedPlayers.Remove(record.target_player.player_name);
                     if (!persistentMute)
                         SendMessageToSource(record, record.GetTargetNames() + " has been unmuted.");
                     PlayerSayMessage(record.target_player.player_name, _UnMutePlayerMessage);
@@ -41031,7 +41031,7 @@ namespace PRoConEvents
                         {
                             try
                             {
-                                command.CommandText = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkats.sql?cacherand=" + Environment.TickCount);
+                                command.CommandText = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkats.sql?cacherand=" + Environment.TickCount);
                                 Log.Debug(() => "SQL setup script fetched from backup location.", 1);
                             }
                             catch (Exception)
@@ -41683,7 +41683,7 @@ namespace PRoConEvents
                 QueueSettingForUpload(new CPluginVariable(@"Discord Role IDs to Mention in Reports", typeof(String[]), _DiscordManager.RoleIDsToMentionReport.ToArray()));
                 QueueSettingForUpload(new CPluginVariable(@"On-Player-Muted Message", typeof(String), _MutedPlayerMuteMessage));
                 QueueSettingForUpload(new CPluginVariable(@"On-Player-Killed Message", typeof(String), _MutedPlayerKillMessage));
-                QueueSettingForUpload(new CPluginVariable(@"On-Player-Kicked Message", typeof(String), _MutedPlayerKickMessage));   
+                QueueSettingForUpload(new CPluginVariable(@"On-Player-Kicked Message", typeof(String), _MutedPlayerKickMessage));
                 QueueSettingForUpload(new CPluginVariable(@"Persistent On-Player-Killed Message", typeof(String), _PersistentMutedPlayerKillMessage));
                 QueueSettingForUpload(new CPluginVariable(@"Persistent On-Player-Kicked Message", typeof(String), _PersistentMutedPlayerKickMessage));
                 QueueSettingForUpload(new CPluginVariable(@"On-Player-Unmuted Message", typeof(String), _UnMutePlayerMessage));
@@ -46302,12 +46302,12 @@ namespace PRoConEvents
                                     ban_enforceGUID = (reader.GetString("ban_enforceGUID") == "Y"),
                                     ban_enforceIP = (reader.GetString("ban_enforceIP") == "Y")
                                 };
-                                
+
                                 if (aBan.ban_status != "Active")
                                 {
                                     continue;
                                 }
-                                
+
                                 if (aBan.ban_record == null)
                                 {
                                     aBan.ban_record = new ARecord
@@ -50130,7 +50130,7 @@ namespace PRoConEvents
                 Log.HandleException(new AException("Error while updating BF4DB whitelist.", e));
             }
         }
-        
+
         private void UpdateBAWhitelist()
         {
             try
@@ -52282,7 +52282,7 @@ namespace PRoConEvents
                 {
                     try
                     {
-                        repInfo = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkatsreputationstats.json" + "?cacherand=" + Environment.TickCount);
+                        repInfo = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkatsreputationstats.json" + "?cacherand=" + Environment.TickCount);
                         Log.Debug(() => "Reputation definitions fetched from backup location.", 1);
                     }
                     catch (Exception)
@@ -52353,7 +52353,7 @@ namespace PRoConEvents
                 {
                     try
                     {
-                        groupInfo = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkatsspecialgroups.json" + "?cacherand=" + Environment.TickCount);
+                        groupInfo = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkatsspecialgroups.json" + "?cacherand=" + Environment.TickCount);
                         Log.Debug(() => "Special group definitions fetched from backup location.", 1);
                     }
                     catch (Exception)
@@ -52562,7 +52562,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            updateInfo = Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkatsupdates.json" + "?cacherand=" + Environment.TickCount);
+                            updateInfo = Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkatsupdates.json" + "?cacherand=" + Environment.TickCount);
                             Log.Debug(() => "SQL updates fetched from backup location.", 1);
                         }
                         catch (Exception)
@@ -53692,7 +53692,7 @@ namespace PRoConEvents
                 Log.Debug(() => "Downloaded from " + GetDomainName(url) + " in " + timer.ElapsedMilliseconds + "ms", 7);
                 return returnString;
             }
-            
+
             public String ClientUploadTimer(WebClient wClient, String url, String data)
             {
                 Log.Debug(() => "Preparing to upload to " + GetDomainName(url), 7);
@@ -54139,8 +54139,8 @@ namespace PRoConEvents
                                 {
                                     try
                                     {
-                                        string stableURL = "https://adkats.e4gl.com/AdKats.cs" + "?cacherand=" + Environment.TickCount;
-                                        string testURL = "https://adkats.e4gl.com/test/AdKats.cs" + "?cacherand=" + Environment.TickCount;
+                                        string stableURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/AdKats.cs" + "?cacherand=" + Environment.TickCount;
+                                        string testURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/test/AdKats.cs" + Environment.TickCount;
                                         if (_pluginVersionStatus == VersionStatus.OutdatedBuild)
                                         {
                                             pluginSource = Util.ClientDownloadTimer(client, stableURL);
@@ -64016,7 +64016,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            downloadString = _plugin.Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkatsweaponnames.json" + "?cacherand=" + Environment.TickCount);
+                            downloadString = _plugin.Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkatsweaponnames.json" + "?cacherand=" + Environment.TickCount);
                             _plugin.Log.Debug(() => "Weapon names fetched from backup location.", 1);
                         }
                         catch (Exception)
@@ -64651,7 +64651,7 @@ namespace PRoConEvents
                     {
                         try
                         {
-                            weaponInfo = Plugin.Util.ClientDownloadTimer(client, "https://adkats.e4gl.com/adkatsblweaponstats.json" + "?cacherand=" + Environment.TickCount);
+                            weaponInfo = Plugin.Util.ClientDownloadTimer(client, "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/adkatsblweaponstats.json" + "?cacherand=" + Environment.TickCount);
                             Plugin.Log.Debug(() => "Weapon statistic definitions fetched from backup location.", 1);
                         }
                         catch (Exception)
