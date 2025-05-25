@@ -20210,6 +20210,10 @@ namespace PRoConEvents
                                 messageObject.Message = messageObject.Message.Substring(1);
                                 isCommand = true;
                             }
+                            else if (messageObject.Message.Length == 1 && "123456789".Contains(messageObject.Message)) {
+                                Log.Debug(() => "Detected votemap number as a message. Setting isCommand to true.");
+                                isCommand = true;
+                            }
 
                             if (isCommand)
                             {
