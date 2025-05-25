@@ -20211,7 +20211,7 @@ namespace PRoConEvents
                                 isCommand = true;
                             }
                             else if (messageObject.Message.Length == 1 && "123456789".Contains(messageObject.Message)) {
-                                Log.Debug(() => "Detected votemap number as a message. Setting isCommand to true.");
+                                Log.Debug(() => "Detected votemap number as a message. Setting isCommand to true.", 6);
                                 isCommand = true;
                             }
 
