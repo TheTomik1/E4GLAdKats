@@ -1815,6 +1815,7 @@ namespace PRoConEvents
                     if (_UseDiscordForReports)
                     {
                         buildList.Add(new CPluginVariable(GetSettingSection("8-3") + t + "Discord WebHook URL", typeof(String), _DiscordManager.ReportWebhookUrl));
+						buildList.Add(new CPluginVariable(GetSettingSection("8-3") + t + "Admin Panel URL", typeof(String), _DiscordManager.AdminPanelUrl));
                         buildList.Add(new CPluginVariable(GetSettingSection("8-3") + t + "Only Send Discord Reports When Admins Offline", typeof(Boolean), _DiscordReportsOnlyWhenAdminless));
                         buildList.Add(new CPluginVariable(GetSettingSection("8-3") + t + "Send update if reported players leave without action", typeof(Boolean), _DiscordReportsLeftWithoutAction));
                         buildList.Add(new CPluginVariable(GetSettingSection("8-3") + t + "Discord Role IDs to Mention in Reports", typeof(String[]), _DiscordManager.RoleIDsToMentionReport.ToArray()));
@@ -8282,7 +8283,7 @@ namespace PRoConEvents
                     }
                     QueueSettingForUpload(new CPluginVariable(@"Send Reports to Discord WebHook", typeof(Boolean), _UseDiscordForReports));
                 }
-                else if (Regex.Match(strVariable, @"Discord WebHook URL").Success)
+				else if (Regex.Match(strVariable, @"Discord WebHook URL").Success)
                 {
                     _DiscordManager.ReportWebhookUrl = strValue;
                     if (_UseDiscordForReports && _firstPlayerListComplete && String.IsNullOrEmpty(_shortServerName))
@@ -8290,6 +8291,11 @@ namespace PRoConEvents
                         Log.Warn("The 'Short Server Name' setting must be filled in before posting discord reports.");
                     }
                     QueueSettingForUpload(new CPluginVariable(@"Discord WebHook URL", typeof(String), _DiscordManager.ReportWebhookUrl));
+                }
+				else if (Regex.Match(strVariable, @"Admin Panel URL").Success)
+                {
+                    _DiscordManager.AdminPanelUrl = strValue;
+                    QueueSettingForUpload(new CPluginVariable(@"Admin Panel URL", typeof(String), _DiscordManager.AdminPanelUrl));
                 }
                 else if (Regex.Match(strVariable, @"Only Send Discord Reports When Admins Offline").Success)
                 {
@@ -13073,7 +13079,7 @@ namespace PRoConEvents
                                             }
                                             if (activeReports.Any() && _UseDiscordForReports && _DiscordReportsLeftWithoutAction)
                                             {
-                                                _DiscordManager.PostReportToDiscord("Reported player " + aPlayer.GetVerboseName() + " left without being acted on.");
+                                                _DiscordManager.PostReportToDiscord("Reported player " + aPlayer.GetVerboseName() + " left without being acted on.", null);
                                             }
                                         }
                                     }
@@ -41718,6 +41724,7 @@ namespace PRoConEvents
                 QueueSettingForUpload(new CPluginVariable(@"Only Send PushBullet Reports When Admins Offline", typeof(Boolean), _PushBulletReportsOnlyWhenAdminless));
                 QueueSettingForUpload(new CPluginVariable(@"Send Reports to Discord WebHook", typeof(Boolean), _UseDiscordForReports));
                 QueueSettingForUpload(new CPluginVariable(@"Discord WebHook URL", typeof(String), _DiscordManager.ReportWebhookUrl));
+				QueueSettingForUpload(new CPluginVariable(@"Admin Panel URL", typeof(String), _DiscordManager.AdminPanelUrl));
                 QueueSettingForUpload(new CPluginVariable(@"Only Send Discord Reports When Admins Offline", typeof(Boolean), _DiscordReportsOnlyWhenAdminless));
                 QueueSettingForUpload(new CPluginVariable(@"Send update if reported players leave without action", typeof(Boolean), _DiscordReportsLeftWithoutAction));
                 QueueSettingForUpload(new CPluginVariable(@"Discord Role IDs to Mention in Reports", typeof(String[]), _DiscordManager.RoleIDsToMentionReport.ToArray()));
@@ -64757,6 +64764,7 @@ namespace PRoConEvents
             private TimeSpan _UpdateDuration = TimeSpan.FromSeconds(29);
             public String ReportWebhookUrl;
             public String WatchlistWebhookUrl;
+			public String AdminPanelUrl;
             public List<String> RoleIDsToMentionReport = new List<String>();
             public List<String> RoleIDsToMentionWatchlist = new List<String>();
             //Vars
@@ -65214,7 +65222,7 @@ namespace PRoConEvents
                 bb.Append(blockCloser);
                 String body = bb.ToString();
 
-                PostReportToDiscord(body + GetMentionString(RoleIDsToMentionReport));
+                PostReportToDiscord(body + GetMentionString(RoleIDsToMentionReport), record.target_player);
             }
 
             public Hashtable GetEmbed()
@@ -65237,10 +65245,10 @@ namespace PRoConEvents
                 return mentions;
             }
 
-            public void PostReportToDiscord(String body)
+            public void PostReportToDiscord(String body, APlayer aPlayer)
             {
                 // the names of both PostReport functions are a little bit confugsion :)
-                PostToWebhook(ReportWebhookUrl, body, null);
+                PostToWebhook(ReportWebhookUrl, aPlayer, body, null);
             }
 
             public void PostWatchListToDiscord(APlayer aPlayer, bool isJoin, String joinLocation)
@@ -65276,10 +65284,10 @@ namespace PRoConEvents
                     },
                 };
 
-                PostToWebhook(WatchlistWebhookUrl, (isJoin ? GetMentionString(RoleIDsToMentionWatchlist) : ""), embed);
+                PostToWebhook(WatchlistWebhookUrl, aPlayer, (isJoin ? GetMentionString(RoleIDsToMentionWatchlist) : ""), embed);
             }
 
-            public void PostToWebhook(String url, String content, Hashtable embed)
+            public void PostToWebhook(String url, APlayer aPlayer, String content, Hashtable embed)
             {
                 try
                 {
@@ -65299,15 +65307,44 @@ namespace PRoConEvents
                     if (embed != null)
                         embeds.Add(embed);
 
-                    WebRequest request = WebRequest.Create(url);
-                    request.Method = "POST";
-                    request.ContentType = "application/json";
-                    String jsonBody = JSON.JsonEncode(new Hashtable {
-                        {"avatar_url", "https://avatars1.githubusercontent.com/u/9680130"},
-                        {"username", "AdKats (" + _plugin._shortServerName + ")"},
-                        {"content", content},
-                        {"embeds", embeds}
-                    });
+					ArrayList components = new ArrayList();
+					if (aPlayer != null)
+					{
+						components.Add(new Hashtable
+						{
+							{ "type", 1 },
+							{ "components", new ArrayList
+								{
+									new Hashtable
+									{
+										{ "type", 2 },
+										{ "style", 5 },
+										{ "label", "Panel" },
+										{ "url", $"{AdminPanelUrl.TrimEnd('/')}/players/{aPlayer.player_id}/{aPlayer.player_name}" }
+									},
+									new Hashtable
+									{
+										{ "type", 2 },
+										{ "style", 5 },
+										{ "label", "BF4CR" },
+										{ "url", $"https://bf4cr.com/?pid=&uid={aPlayer.player_name}&cnt=&startdate=" }
+									}
+								}
+							}
+						});
+					}
+
+					WebRequest request = WebRequest.Create(url);
+					request.Method = "POST";
+					request.ContentType = "application/json";
+
+					String jsonBody = JSON.JsonEncode(new Hashtable {
+						{ "avatar_url", "https://avatars1.githubusercontent.com/u/9680130" },
+						{ "username", "AdKats (" + _plugin._shortServerName + ")" },
+						{ "content", content },
+						{ "embeds", embeds },
+						{ "components", components }
+					});
                     byte[] byteArray = Encoding.UTF8.GetBytes(jsonBody);
                     request.ContentLength = byteArray.Length;
                     Stream requestStream = request.GetRequestStream();
