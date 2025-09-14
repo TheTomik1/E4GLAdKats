@@ -20192,30 +20192,36 @@ namespace PRoConEvents
                             Log.Debug(() => "begin reading message", 6);
                             //Dequeue the first/next message
                             AChatMessage messageObject = inboundMessages.Dequeue();
+                            APlayer aPlayer = null;
 
                             Boolean isCommand = false;
                             //Check if the message is a command
-                            if (messageObject.Message.StartsWith("@") || messageObject.Message.StartsWith("!") || messageObject.Message.StartsWith("."))
-                            {
+
+                            if (_PlayerDictionary.TryGetValue(messageObject.Speaker, out aPlayer) && PlayerIsAdmin(aPlayer) && messageObject.Message.StartsWith("/")) {
                                 messageObject.Message = messageObject.Message.Substring(1);
                                 isCommand = true;
-                            }
-                            else if (messageObject.Message.StartsWith("/@") || messageObject.Message.StartsWith("/!") || messageObject.Message.StartsWith("/."))
-                            {
-                                messageObject.Message = messageObject.Message.Substring(2);
-                                isCommand = true;
-                            }
-                            else if (messageObject.Message.StartsWith("/"))
-                            {
-                                messageObject.Message = messageObject.Message.Substring(1);
-                                isCommand = true;
-                            }
-                            else if (messageObject.Message.Length == 1 && "123456789".Contains(messageObject.Message)) {
-                                Log.Debug(() => "Detected votemap number as a message. Setting isCommand to true.", 6);
-                                isCommand = true;
+                            } else {
+                                if (messageObject.Message.StartsWith("@") || messageObject.Message.StartsWith("!") || messageObject.Message.StartsWith("."))
+                                {
+                                    messageObject.Message = messageObject.Message.Substring(1);
+                                    isCommand = true;
+                                }
+                                else if (messageObject.Message.StartsWith("/@") || messageObject.Message.StartsWith("/!") || messageObject.Message.StartsWith("/."))
+                                {
+                                    messageObject.Message = messageObject.Message.Substring(2);
+                                    isCommand = true;
+                                }
+                                else if (messageObject.Message.StartsWith("/"))
+                                {
+                                    messageObject.Message = messageObject.Message.Substring(1);
+                                    isCommand = true;
+                                } 
+                                else if (Regex.IsMatch(messageObject.Message, @"^\d$")) {
+                                    isCommand = true;
+                                }
                             }
 
-                            if (isCommand)
+                            if (isCommand && !Regex.IsMatch(messageObject.Message, @"^\d$"))
                             {
                                 //Confirm it's actually a valid command in AdKats
                                 String[] splitConfirmCommand = messageObject.Message.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -20284,8 +20290,6 @@ namespace PRoConEvents
                             //ignore if it's a server call
                             if (messageObject.Speaker != "Server")
                             {
-
-                                APlayer aPlayer;
                                 if (_PlayerDictionary.TryGetValue(messageObject.Speaker, out aPlayer))
                                 {
                                     if (!_AFKIgnoreChat)
@@ -35615,20 +35619,52 @@ namespace PRoConEvents
                 }
                 if (record.source_player != null && record.source_name != record.target_name && record.source_player.player_type == PlayerType.Spectator)
                 {
-                    //Custom record to boost rep for reporting from spectator mode
-                    ARecord repRecord = new ARecord
+
+                    int repBoostsToday = 0;
+                    using (MySqlConnection connection = GetDatabaseConnection())
                     {
-                        record_source = ARecord.Sources.Automated,
-                        server_id = _serverInfo.ServerID,
-                        command_type = GetCommandByKey("player_repboost"),
-                        command_numeric = 0,
-                        target_name = record.source_player.player_name,
-                        target_player = record.source_player,
-                        source_name = "RepManager",
-                        record_message = "Player reported from Spectator Mode",
-                        record_time = UtcNow()
-                    };
-                    UploadRecord(repRecord);
+                        using (MySqlCommand command = connection.CreateCommand())
+                        {
+                            command.CommandText = @"
+                                SELECT COUNT(*) AS rep_boosts_today
+                                FROM adkats_records_main
+                                WHERE command_type = 69
+                                AND target_id = @sourceID
+                                AND DATE(record_time) = CURRENT_DATE;
+                            ";
+                            command.Parameters.AddWithValue("@sourceID", record.source_player.player_id);
+
+                            using (MySqlDataReader reader = SafeExecuteReader(command))
+                            {
+                                if (reader.Read())
+                                {
+                                    repBoostsToday = reader.GetInt32("rep_boosts_today");
+                                }
+                            }
+                        }
+                    }
+
+                    if (repBoostsToday < 5)
+                    {
+                        ARecord repRecord = new ARecord
+                        {
+                            record_source = ARecord.Sources.Automated,
+                            server_id = _serverInfo.ServerID,
+                            command_type = GetCommandByKey("player_repboost"),
+                            command_numeric = 0,
+                            target_name = record.source_player.player_name,
+                            target_player = record.source_player,
+                            source_name = "RepManager",
+                            record_message = "Player reported from Spectator Mode",
+                            record_time = UtcNow()
+                        };
+                        UploadRecord(repRecord);
+                    }
+                    else
+                    {
+                        PlayerTellMessage(record.source_name, "You have reached maximum amount of reports made from spectator for now. You may report later.", true, 6);
+                        Log.Debug(() => $"{record.source_player.player_name} reached daily rep boost limit.", 5);
+                    }
                 }
             }
             catch (Exception e)
