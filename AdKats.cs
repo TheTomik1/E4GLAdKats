@@ -140,6 +140,8 @@ namespace PRoConEvents
         private volatile String _pluginDescription;
         private volatile String _pluginLinks;
         private volatile Boolean _pluginEnabled;
+        private volatile Boolean _cancelNuke = false;
+        private volatile Boolean _nukeCountdownActive = false;
         private volatile Boolean _pluginRebootOnDisable;
         private volatile String _pluginRebootOnDisableSource;
         private volatile Boolean _threadsReady;
@@ -25745,6 +25747,37 @@ namespace PRoConEvents
                             }
                         }
                         break;
+                    case "cancel_nuke":
+						{
+							//Remove previous commands awaiting confirmation
+							CancelSourcePendingAction(record);
+
+							if (_roundState != RoundState.Playing && record.source_name != "ProconAdmin")
+							{
+								SendMessageToSource(record, record.command_type.command_name + " cannot be used between rounds.");
+								FinalizeRecord(record);
+								return;
+							}
+							if (_serverInfo.ServerType == "OFFICIAL")
+							{
+								SendMessageToSource(record, record.command_type.command_name + " cannot be performed on official servers.");
+								FinalizeRecord(record);
+								return;
+							}
+
+							if (_nukeCountdownActive)
+							{
+								_cancelNuke = true;
+								SendMessageToSource(record, "Nuke countdown cancelled.");
+							}
+							else
+							{
+								SendMessageToSource(record, "There is no active nuke countdown to cancel.");
+							}
+
+							FinalizeRecord(record);
+						}
+                        break;
                     case "server_countdown":
                         {
                             //Remove previous commands awaiting confirmation
@@ -26879,6 +26912,18 @@ namespace PRoConEvents
                             }
                         }
                         break;
+					case "player_repeat": 
+						{
+ 							//Remove previous commands awaiting confirmation
+							CancelSourcePendingAction(record);
+
+							CommandAgain(record);
+
+							// SendMessageToSource(record, "Your latest command has been repeated.");
+
+							FinalizeRecord(record);
+						}
+						break;
                     case "player_dequeue":
                         {
                             //Remove previous commands awaiting confirmation
@@ -29735,6 +29780,41 @@ namespace PRoConEvents
             }
             Log.Debug(() => "Exiting FinalizeRecord", 7);
         }
+
+		public void CommandAgain(ARecord record)
+		{	
+			Log.Debug(() => "Entered CommandAgain", 7);
+			if (record == null) {
+				Log.Debug(() => "record is null!", 7);
+				return;
+			}
+
+			ARecord lastAction = FetchLatestRecord(record.source_player.player_id, null, false, false);
+
+			if (lastAction == null || lastAction.command_action == null)
+			{
+				Log.Debug(() => "No recent command found to repeat.", 7);
+				SendMessageToSource(record, "No recent command found to repeat."); 
+				return;
+			}
+ 
+			ARecord repeatRecord = new ARecord {
+				record_source = ARecord.Sources.InGame,
+				server_id = _serverInfo.ServerID,
+				source_name = record.source_player.player_name,
+				source_player = record.source_player,
+				target_name = lastAction.target_name,
+				target_player = lastAction.target_player,
+				command_type = lastAction.command_type,
+				command_action = lastAction.command_action,
+				command_numeric = lastAction.command_numeric,
+				record_message = lastAction.record_message,
+				record_time = UtcNow()
+			};
+
+			SendMessageToSource(record, "Repeating " + lastAction.command_action.command_name + " on " + lastAction.target_name);
+			QueueRecordForProcessing(repeatRecord);
+		}
 
         public void CompleteTargetInformation(ARecord record, Boolean requireConfirm, Boolean externalFetch, Boolean externalOnlineFetch)
         {
@@ -36547,6 +36627,7 @@ namespace PRoConEvents
 
                 if (_NukeCountdownDurationSeconds > 0)
                 {
+                    _nukeCountdownActive = true;
                     //Start the thread
                     Threading.StartWatchdog(new Thread(new ThreadStart(delegate
                     {
@@ -36556,8 +36637,10 @@ namespace PRoConEvents
                             Thread.CurrentThread.Name = "NukeCountdownPrinter";
                             for (Int32 countdown = _NukeCountdownDurationSeconds; countdown > 0; countdown--)
                             {
-                                if (!_pluginEnabled)
+                                if (!_pluginEnabled || _cancelNuke)
                                 {
+                                    _cancelNuke = false;
+                                    _nukeCountdownActive = false; 
                                     Threading.StopWatchdog();
                                     return;
                                 }
@@ -36627,9 +36710,12 @@ namespace PRoConEvents
                         catch (Exception)
                         {
                             Log.HandleException(new AException("Error while printing nuke countdown"));
+                        } finally {
+                            _cancelNuke = false;
+                            _nukeCountdownActive = false;
+                            Log.Debug(() => "Exiting a nuke countdown printer.", 5);
+                            Threading.StopWatchdog();
                         }
-                        Log.Debug(() => "Exiting a nuke countdown printer.", 5);
-                        Threading.StopWatchdog();
                     })));
                 }
                 else
@@ -42752,6 +42838,12 @@ namespace PRoConEvents
                     Log.Error("Attempted to update reputation of invalid player.");
                     return;
                 }
+                List<ASpecialPlayer> isOnAutoAssistBlacklist = GetMatchingASPlayersOfGroup("blacklist_autoassist", aPlayer);
+                if (isOnAutoAssistBlacklist.Any())
+                {
+                    Log.Debug(() => "Can't update reputation for " + aPlayer.GetVerboseName() + ". Player is on the auto-assist blacklist.", 4);
+                    return;
+                }
                 if (_commandSourceReputationDictionary == null || !_commandSourceReputationDictionary.Any() || _commandTargetReputationDictionary == null || !_commandTargetReputationDictionary.Any())
                 {
                     Log.Debug(() => "Reputation dictionaries not populated. Can't update reputation for " + aPlayer.GetVerboseName() + ".", 4);
@@ -43632,6 +43724,135 @@ namespace PRoConEvents
             return records;
         }
 
+		private ARecord FetchLatestRecord(Int64? player_id, Int64? command_id, Boolean target_only, Boolean debug)
+        {
+            Log.Debug(() => "FetchRecentRecord starting!", 6);
+			ARecord latestRecord = null;
+            if (_databaseConnectionCriticalState)
+            {
+                return latestRecord;
+            }
+            try
+            {
+                //Success fetching record
+                using (MySqlConnection connection = GetDatabaseConnection())
+                {
+                    using (MySqlCommand command = connection.CreateCommand())
+                    {
+                        String tablename = (debug) ? ("`adkats_records_debug`") : ("`adkats_records_main`");
+                        String sql = @"
+                        (SELECT
+                            `record_id`,
+                            `server_id`,
+                            `command_type`,
+                            `command_action`,
+                            `command_numeric`,
+                            `target_name`,
+                            `target_id`,
+                            `source_name`,
+                            `source_id`,
+                            `record_message`,
+                            `record_time`
+                        FROM
+                            " + tablename + @"
+                        WHERE
+                            `record_id` = `record_id`";
+                        if (command_id != null && command_id > 0)
+                        {
+                            sql += @"
+                            AND
+                            (
+                                `command_type` = @command_id
+                                OR
+                                `command_action` = @command_id
+                            )";
+                            command.Parameters.AddWithValue("@command_id", command_id);
+                        }
+                        if (player_id != null && player_id > 0)
+                        {
+                            sql += @"
+                            AND
+                            (
+                                `target_id` = @player_id
+                                " + ((target_only) ? ("") : (" OR `source_id` = @player_id ")) + @"
+                            )";
+                            command.Parameters.AddWithValue("@player_id", player_id);
+                        }
+                        sql += @"
+                        ORDER BY
+                            `record_id` DESC
+                        LIMIT 1)
+                        ORDER BY `record_id` ASC";
+                        command.CommandText = sql;
+                        using (MySqlDataReader reader = SafeExecuteReader(command))
+                        {
+                            //Grab the records
+                            while (reader.Read())
+                            {
+                                ARecord record = new ARecord();
+                                record.record_source = ARecord.Sources.Database;
+                                record.record_access = ARecord.AccessMethod.HiddenExternal;
+                                record.record_id = reader.GetInt64("record_id");
+                                record.server_id = reader.GetInt64("server_id");
+                                Int32 commandTypeInt = reader.GetInt32("command_type");
+                                if (!_CommandIDDictionary.TryGetValue(commandTypeInt, out record.command_type))
+                                {
+                                    Log.Error("Unable to parse command type " + commandTypeInt + " when fetching record.");
+                                }
+                                Int32 commandActionInt = reader.GetInt32("command_action");
+                                if (!_CommandIDDictionary.TryGetValue(commandActionInt, out record.command_action))
+                                {
+                                    Log.Error("Unable to parse command action " + commandActionInt + " when fetching record.");
+                                }
+                                record.command_numeric = reader.GetInt32("command_numeric");
+                                record.target_name = reader.GetString("target_name");
+                                if (!reader.IsDBNull(6))
+                                {
+                                    Int64 targetID = reader.GetInt64(6);
+                                    APlayer tPlayer;
+                                    if ((_PlayerDictionary.TryGetValue(record.target_name, out tPlayer) || _PlayerLeftDictionary.TryGetValue(record.target_name, out tPlayer)) && tPlayer.player_id == targetID)
+                                    {
+                                        tPlayer.LastUsage = UtcNow();
+                                        Log.Debug(() => "Target player fetched from memory.", 7);
+                                    }
+                                    else
+                                    {
+                                        tPlayer = FetchPlayer(false, true, false, null, targetID, null, null, null, null);
+                                    }
+                                    record.target_player = tPlayer;
+                                }
+                                record.source_name = reader.GetString("source_name");
+                                if (!reader.IsDBNull(8))
+                                {
+                                    Int64 targetID = reader.GetInt64(8);
+                                    APlayer sPlayer;
+                                    if ((_PlayerDictionary.TryGetValue(record.target_name, out sPlayer) || _PlayerLeftDictionary.TryGetValue(record.target_name, out sPlayer)) && sPlayer.player_id == targetID)
+                                    {
+                                        sPlayer.LastUsage = UtcNow();
+                                        Log.Debug(() => "Target player fetched from memory.", 7);
+                                    }
+                                    else
+                                    {
+                                        sPlayer = FetchPlayer(false, true, false, null, targetID, null, null, null, null);
+                                    }
+                                    record.source_player = sPlayer;
+                                }
+                                record.record_message = reader.GetString("record_message");
+                                record.record_time = reader.GetDateTime("record_time");
+                                latestRecord = record;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.HandleException(new AException("Error while fetching recent record", e));
+            }
+
+            Log.Debug(() => "FetchRecentRecord finished!", 6);
+            return latestRecord;
+        }
 
         private List<ARecord> FetchUnreadRecords()
         {
@@ -48110,6 +48331,15 @@ namespace PRoConEvents
                                     SendNonQuery("Adding command player_whitelistba_remove", "INSERT INTO `adkats_commands` VALUES(159, 'Active', 'player_whitelistba_remove', 'Log', 'Remove BattlefieldAgency Whitelist', 'unbawhitelist', TRUE, 'AnyHidden')", true);
                                     newCommands = true;
                                 }
+                                if (!_CommandIDDictionary.ContainsKey(160))
+                                {
+                                    SendNonQuery("Adding command cancel_nuke", "INSERT INTO `adkats_commands` VALUES(160, 'Active', 'cancel_nuke', 'Log', 'Cancel Nuke', 's', TRUE, 'AnyHidden')", true);
+                                    newCommands = true;
+                                }
+								if (!_CommandIDDictionary.ContainsKey(161)) {
+									SendNonQuery("Adding command player_repeat", "INSERT INTO `adkats_commands` VALUES(161, 'Active', 'player_repeat', 'Log', 'Repeat the latest command', 'again', TRUE, 'AnyHidden')", true);
+                                    newCommands = true;
+								}
                                 if (newCommands)
                                 {
                                     FetchCommands();
@@ -48176,6 +48406,7 @@ namespace PRoConEvents
             _CommandDescriptionDictionary["round_next"] = "Runs the next round/map in line. All players keep their points.";
             _CommandDescriptionDictionary["round_end"] = "Ends the current round with a decided winner.";
             _CommandDescriptionDictionary["server_nuke"] = "Kills all players in the decided subset.";
+            _CommandDescriptionDictionary["cancel_nuke"] = "Cancels active nuke.";
             _CommandDescriptionDictionary["server_kickall"] = "Kicks all non-admins from the server.";
             _CommandDescriptionDictionary["adkats_exception"] = "Invisible command. Issued by AdKats to log exceptions.";
             _CommandDescriptionDictionary["banenforcer_enforce"] = "Invisible command. Issued by BanEnforcer when a player's ban is enforced.";
@@ -48254,6 +48485,7 @@ namespace PRoConEvents
             _CommandDescriptionDictionary["player_whitelistcommand_remove"] = "Removes a player from the command target whitelist.";
             _CommandDescriptionDictionary["player_blacklistautoassist"] = "A player under auto-assist blacklist is automatically @assist'd when baserape starts.";
             _CommandDescriptionDictionary["player_blacklistautoassist_remove"] = "Removes a player from the auto-assist blacklist.";
+			_CommandDescriptionDictionary["player_repeat"] = "Repeats the latest run command.";
             _CommandDescriptionDictionary["player_isadmin"] = "Fetches a player's admin status.";
             _CommandDescriptionDictionary["self_feedback"] = "Logs feedback for the server.";
             _CommandDescriptionDictionary["player_loadout"] = "Returns a player's loadout if AdKatsLRT is installed and integrated.";
