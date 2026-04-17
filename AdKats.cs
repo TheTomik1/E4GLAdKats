@@ -54405,45 +54405,25 @@ namespace PRoConEvents
                                 try
                                 {
                                     string stableURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/AdKats.cs" + "?cacherand=" + Environment.TickCount;
-                                    string testURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/test/AdKats.cs" + "?cacherand=" + Environment.TickCount;
                                     if (_pluginVersionStatus == VersionStatus.OutdatedBuild)
                                     {
                                         pluginSource = Util.ClientDownloadTimer(client, stableURL);
                                     }
-                                    else
-                                    {
-                                        pluginSource = Util.ClientDownloadTimer(client, testURL);
-                                    }
                                 }
                                 catch (Exception)
                                 {
-                                    try
+                                    if (_pluginUpdateCaller != null)
                                     {
-                                        string stableURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/main/AdKats.cs" + "?cacherand=" + Environment.TickCount;
-                                        string testURL = "https://raw.githubusercontent.com/TheTomik1/E4GLAdKats/test/AdKats.cs" + Environment.TickCount;
-                                        if (_pluginVersionStatus == VersionStatus.OutdatedBuild)
-                                        {
-                                            pluginSource = Util.ClientDownloadTimer(client, stableURL);
-                                        }
-                                        else
-                                        {
-                                            pluginSource = Util.ClientDownloadTimer(client, testURL);
-                                        }
+                                        SendMessageToSource(_pluginUpdateCaller, "Unable to download plugin update.");
                                     }
-                                    catch (Exception)
+                                    if (_pluginVersionStatus == VersionStatus.OutdatedBuild)
                                     {
-                                        if (_pluginUpdateCaller != null)
-                                        {
-                                            SendMessageToSource(_pluginUpdateCaller, "Unable to download plugin update.");
-                                        }
-                                        if (_pluginVersionStatus == VersionStatus.OutdatedBuild)
-                                        {
-                                            Log.Error("Unable to download plugin update to version " + _latestPluginVersion);
-                                        }
-                                        _pluginUpdateCaller = null;
-                                        Threading.StopWatchdog();
-                                        return;
+                                        Log.Error("Unable to download plugin update to version " + _latestPluginVersion);
                                     }
+									Log
+                                    _pluginUpdateCaller = null;
+                                    Threading.StopWatchdog();
+                                    return;
                                 }
                             }
                             if (String.IsNullOrEmpty(pluginSource))
