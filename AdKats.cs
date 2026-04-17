@@ -54420,7 +54420,6 @@ namespace PRoConEvents
                                     {
                                         Log.Error("Unable to download plugin update to version " + _latestPluginVersion);
                                     }
-									Log
                                     _pluginUpdateCaller = null;
                                     Threading.StopWatchdog();
                                     return;
