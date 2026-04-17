@@ -32133,6 +32133,7 @@ namespace PRoConEvents
                         {
                             banDurationString = FormatTimeString(totalTime, 2) + " (" + FormatTimeString(remainingTime, 2) + ")";
                         }
+						OnlineAdminSayMessage("Enforcing " + banDurationString + " ban on " + aBan.ban_record.GetTargetNames() + " for " + aBan.ban_record.record_message);
                         AdminSayMessage(Log.FBold(Log.CRed("Enforcing " + banDurationString + " ban on " + aBan.ban_record.GetTargetNames() + " for " + aBan.ban_record.record_message)));
                     }
                 }
